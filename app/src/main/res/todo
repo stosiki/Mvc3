@@ -1,0 +1,4 @@
++ On "Update me" click, raise a dialog asking for an input string. Add the received string to
+    the
+- Implement list of items and adjust controller to act accordingly
+    - start with the model
