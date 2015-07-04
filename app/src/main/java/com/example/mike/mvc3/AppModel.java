@@ -9,19 +9,20 @@ import java.util.Random;
 
 /**
  * Created by mike on 6/28/2015.
+ * 04/07 moved to real model
  */
 public class AppModel {
     public interface AppModelListener {
-        public void onModelUpdated(AppModel model);
+        void onModelUpdated(AppModel model);
     }
 
     private ModelData modelData;
 
-    private List<AppModelListener> listeners;
+    private final List<AppModelListener> listeners;
 
     public AppModel() {
         modelData = new ModelData();
-        listeners = new ArrayList<AppModelListener>();
+        listeners = new ArrayList<>();
     }
 
     public final ModelData getData() {
@@ -30,12 +31,21 @@ public class AppModel {
         }
     }
 
-    public final void updateData(String s) {
-        SystemClock.sleep(5000);
+    public void addEventLine(EventDescriptor descriptor) throws Exception {
         synchronized (this) {
-            modelData.setData(s);
+            modelData.addEventLine(descriptor);
         }
         notifyListeners();
+    }
+
+    public ArrayList<SimpleEvent> getEventLine(String eventTitle) {
+        return modelData.getEventLine(eventTitle);
+    }
+
+    public void addEvent(String eventTitle, SimpleEvent event) {
+        synchronized (this) {
+            modelData.addEvent(eventTitle, event);
+        }
     }
 
     public void addListener(AppModelListener listener) {
