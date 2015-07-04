@@ -13,6 +13,16 @@ import java.util.List;
 
 import static com.example.mike.mvc3.ControllerProtocol.*;
 
+/**
+ * messages coming from the view:
+ * - add/remove event line
+ *  = respond with raising a dialog asking for a title and type, once entered
+ *  = add a list item to the list view
+ * - add event (simple, numeric, or comment) to existing line
+ *  = if numeric or comment event, raise a dialog, wait for input
+ *  = increase counter on the list item clicked
+ * - view event line (next phase)
+ */
 
 public class MainActivity extends ActionBarActivity
         implements TextEntryDialogFragment.TextEntryDialogListener {
@@ -22,7 +32,7 @@ public class MainActivity extends ActionBarActivity
     private AppView appView;
 
     private Handler inboxHandler;
-    private List<Handler> outboxHandlers;
+    private final List<Handler> outboxHandlers;
 
 
 
@@ -38,12 +48,37 @@ public class MainActivity extends ActionBarActivity
         inboxHandler = new Handler(handlerThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
-                Log.d(TAG, "handleMessage");
-                onUpdateRequested();
+                String eventLineTitle;
+                switch(msg.what) {
+                    case ADD_EVENT_LINE:
+                        // raise dialog asking for title and type
+                        EventLineCreateDialog dialog = new EventLineCreateDialog();
+                        break;
+                    case REMOVE_EVENT_LINE:
+                        // get the title from the message and remove it
+                        eventLineTitle = msg.getData().getString("title");
+                        removeEventLine(eventLineTitle);
+                        break;
+                    case ADD_EVENT:
+                        // get the title from the message and
+                        eventLineTitle = msg.getData().getString("title");
+                        // find message type by title
+
+                        // if numeric or comment, raise a dialog
+                        // if simple, add it to data
+
+
+                        break;
+                    case UNDO_ADD_EVENT:
+                        // remove last event from the model and show toast
+                        break;
+                    default:
+                        Log.e(TAG, "Unknown message");
+                }
             }
         };
 
-        outboxHandlers = new ArrayList<Handler>();
+        outboxHandlers = new ArrayList<>();
 
         appView = (AppView)View.inflate(this, R.layout.activity_main, null);
         setContentView(appView);
@@ -60,7 +95,7 @@ public class MainActivity extends ActionBarActivity
         dialog.show(getFragmentManager(), "dialog");
     }
 
-    private final void notifyOutboxHandlers(int what, int arg1, int arg2, Object obj, Bundle bundle) {
+    private void notifyOutboxHandlers(int what, int arg1, int arg2, Object obj, Bundle bundle) {
         if (outboxHandlers.isEmpty()) {
             Log.w(TAG, String.format("No outbox handler to handle outgoing message (%d)", what));
         } else {
