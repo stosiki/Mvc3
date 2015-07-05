@@ -56,7 +56,7 @@ public class TextEntryDialogFragment extends DialogFragment {
         return dialogBuilder.create();
     }
 
-    public String getDescriptionText() {
+    public String getTitleText() {
         return description.getText().toString();
     }
 }

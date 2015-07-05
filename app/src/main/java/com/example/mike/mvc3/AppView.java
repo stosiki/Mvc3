@@ -1,16 +1,26 @@
 package com.example.mike.mvc3;
 
+import android.app.Activity;
+import android.app.ListActivity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.example.mike.mvc3.ControllerProtocol.*;
 
@@ -31,55 +41,78 @@ public class AppView extends LinearLayout {
     // inbox handler to make sure all inbound calls are processed on UI thread
     private Handler inboxHandler;
 
+    // the model
+    private AppModel model;
+
     // UI controls
-    private TextView dataView1;
-    private Button control1;
+    private ListView eventLineList;
+    private ArrayAdapter eventLineListAdapter;
+    private Button addEventLine;
 
     // We need this form of constructor to be able to describe the layout in xml file
     public AppView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        inboxHandler = new Handler(context.getMainLooper()) {
-            @Override
-            public void handleMessage(Message message) {
-                switch(message.what) {
-                    case UPDATE_STARTED:
-                        showUpdating();
-                        break;
-                    case UPDATE_ENDED:
-                        Bundle data = message.getData();
-                        String valueOne = data.getString("value_one");
-                        setData(valueOne);
-                        showUpdateReady();
-                        break;
-                    case DATA_UPDATE_ERROR:
-                        Log.e("AppView", "Data Update Error");
-                    default:
-                        Log.e(TAG, "Hadler: unkonwn command");
-                }
+        inboxHandler = new InboxHandler(context.getMainLooper());
+
+    }
+
+
+    private class InboxHandler extends Handler {
+        InboxHandler(Looper looper) {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage(Message message) {
+            switch(message.what) {
+                case UPDATE_STARTED:
+                    AppView.this.showUpdating();
+                    break;
+                case UPDATE_ENDED:
+                    Bundle data = message.getData();
+
+                    String valueOne = data.getString("value_one");
+//                        setData(valueOne);
+                    showUpdateReady();
+                    break;
+                case DATA_UPDATE_ERROR:
+                    Log.e("AppView", "Data Update Error");
+                default:
+                    Log.e(TAG, "Hadler: unkonwn command");
             }
-        };
+        }
     }
 
     protected void onFinishInflate() {
         super.onFinishInflate();
+        MainActivity mainActivity = (MainActivity)getContext();
+        model = mainActivity.getModel();
 
-        dataView1 = (TextView)findViewById(R.id.data_view1);
-        control1 = (Button)findViewById(R.id.control1);
-        control1.setOnClickListener(new View.OnClickListener() {
+        List<EventLineDescriptor> eventLineItems = model.getEventLineDescriptors();
+        eventLineListAdapter = new ArrayAdapter<EventLineDescriptor>(getContext(),
+                android.R.layout.simple_list_item_1,
+                eventLineItems);
+        ((ListActivity)getContext()).setListAdapter(eventLineListAdapter);
+
+        /*
+        eventLineList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 showUpdating();
                 Log.d("", "showUpdating");
-                Message msg = Message.obtain(controllerHandler, VALUE_ONE_UPDATE_REQUESTED);
-                if(msg != null && msg.getTarget() != null) {
-                    msg.sendToTarget();
-                } else {
-                    Log.d("MainActivity", "Controller handler message is null");
-                }
+                Message.obtain(controllerHandler, VALUE_ONE_UPDATE_REQUESTED).sendToTarget();
             }
         });
-
+        */
+        addEventLine = (Button)findViewById(R.id.control1);
+        addEventLine.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                eventLineListAdapter.add(new EventLineDescriptor(1, "something elase"));
+                Message.obtain(controllerHandler, ADD_EVENT_LINE).sendToTarget();
+            }
+        });
     }
 
     public void setControllerHandler(Handler controllerHandler) {
@@ -90,22 +123,19 @@ public class AppView extends LinearLayout {
         return inboxHandler;
     }
 
-    private void setData(String data) {
-        // update view
-        dataView1.setText(dataView1.getText() + data);
-    }
+
 
     private void showUpdateReady() {
-        control1.setText("Update Me");
-        control1.setEnabled(true);
-        control1.setBackgroundColor(Color.parseColor("#aa0000"));
+        addEventLine.setText("Update Me");
+        addEventLine.setEnabled(true);
+        addEventLine.setBackgroundColor(Color.parseColor("#aa0000"));
     }
 
 
     private void showUpdating() {
-        control1.setBackgroundColor(Color.parseColor("#222222"));
-        control1.setTextColor(Color.parseColor("#cccccc"));
-        control1.setText("Updating...");
-        control1.setEnabled(false);
+        addEventLine.setBackgroundColor(Color.parseColor("#222222"));
+        addEventLine.setTextColor(Color.parseColor("#cccccc"));
+        addEventLine.setText("Updating...");
+        addEventLine.setEnabled(false);
     }
 }

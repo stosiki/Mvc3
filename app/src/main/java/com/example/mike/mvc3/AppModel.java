@@ -1,11 +1,7 @@
 package com.example.mike.mvc3;
 
-import android.os.SystemClock;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import java.util.Random;
 
 /**
  * Created by mike on 6/28/2015.
@@ -31,15 +27,23 @@ public class AppModel {
         }
     }
 
-    public void addEventLine(EventDescriptor descriptor) throws Exception {
+    public void addEventLine(EventLineDescriptor descriptor) throws Exception {
         synchronized (this) {
             modelData.addEventLine(descriptor);
         }
         notifyListeners();
     }
 
+    public void removeEventLine(String eventLineTitle) {
+        modelData.removeEventLine(eventLineTitle);
+    }
+
     public ArrayList<SimpleEvent> getEventLine(String eventTitle) {
         return modelData.getEventLine(eventTitle);
+    }
+
+    public List<EventLineDescriptor> getEventLineDescriptors() {
+        return modelData.getEventLineDescriptors();
     }
 
     public void addEvent(String eventTitle, SimpleEvent event) {

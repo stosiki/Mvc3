@@ -1,6 +1,7 @@
 package com.example.mike.mvc3;
 
 import android.app.DialogFragment;
+import android.app.ListActivity;
 import android.os.*;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -24,15 +25,15 @@ import static com.example.mike.mvc3.ControllerProtocol.*;
  * - view event line (next phase)
  */
 
-public class MainActivity extends ActionBarActivity
-        implements TextEntryDialogFragment.TextEntryDialogListener {
+public class MainActivity extends ListActivity
+        implements EventLineCreateDialog.EventLineCreateDialogListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private AppModel model;
     private AppView appView;
 
     private Handler inboxHandler;
-    private final List<Handler> outboxHandlers;
+    private List<Handler> outboxHandlers;
 
 
 
@@ -53,6 +54,7 @@ public class MainActivity extends ActionBarActivity
                     case ADD_EVENT_LINE:
                         // raise dialog asking for title and type
                         EventLineCreateDialog dialog = new EventLineCreateDialog();
+                        dialog.show(getFragmentManager(), "dialog");
                         break;
                     case REMOVE_EVENT_LINE:
                         // get the title from the message and remove it
@@ -81,9 +83,18 @@ public class MainActivity extends ActionBarActivity
         outboxHandlers = new ArrayList<>();
 
         appView = (AppView)View.inflate(this, R.layout.activity_main, null);
+//        appView.setModel(model);
         setContentView(appView);
         appView.setControllerHandler(inboxHandler);
         addOutboxHandler(appView.getInboxHandler());
+    }
+
+    AppModel getModel() {
+        return model;
+    }
+
+    private void removeEventLine(String eventLineTitle) {
+        model.removeEventLine(eventLineTitle);
     }
 
     public void onUpdateRequested() {
@@ -137,41 +148,41 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onDialogPositiveClick(DialogFragment dialog) {
-//        if(dialog instanceof TextEntryDialogFragment) {
-            // gather data from the dialog
-            String description = ((TextEntryDialogFragment) dialog).getDescriptionText();
-            Log.d(TAG, description);
-            // launch model update
-            updateModel(description);
-//        }
-    }
-
-    private void updateModel(final String s) {
-        Thread updateThread = new Thread("Model Update") {
-            @Override
-            public void run() {
-                try {
-                    model.updateData(s);
-                } catch (Throwable t) {
-                    Log.e(TAG, "Error in the update thread", t);
-                    notifyOutboxHandlers(DATA_UPDATE_ERROR, 0, 0, null, null);
-                } finally {
-                    ModelData data = model.getData();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("value_one", data.getData());
-                    notifyOutboxHandlers(UPDATE_ENDED, 0, 0, null, bundle);
-                    Log.d(TAG, "Model udpate finished");
-                }
-            }
-        };
+    private void updateModel(Runnable runnable) {
+        Thread updateThread = new Thread(runnable);
         updateThread.start();
         Log.d(TAG, "Starting model update");
     }
 
+
     @Override
-    public void onDialogNegativeClick(DialogFragment dialog) {
+    public void onEventLineCreatePositive(DialogFragment dialog) {
+        String eventLineTitle = ((EventLineCreateDialog)dialog).getTitle();
+        final EventLineDescriptor descriptor = new EventLineDescriptor(/* TODO */ 1, eventLineTitle);
+        try {
+            updateModel(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        model.addEventLine(descriptor);
+                    } catch (Throwable t) {
+                        Log.e(TAG, "Error in the update thread", t);
+                        notifyOutboxHandlers(DATA_UPDATE_ERROR, 0, 0, null, null);
+                    } finally {
+                        ModelData data = model.getData();
+                        Bundle bundle = new Bundle();
+                        notifyOutboxHandlers(UPDATE_ENDED, 0, 0, null, bundle);
+                        Log.d(TAG, "Model udpate finished");
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    @Override
+    public void onEventLineCreateNegative(DialogFragment dialog) {
 
     }
 }
