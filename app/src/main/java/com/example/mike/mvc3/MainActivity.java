@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,19 +158,19 @@ public class MainActivity extends ListActivity
 
     @Override
     public void onEventLineCreatePositive(DialogFragment dialog) {
-        String eventLineTitle = ((EventLineCreateDialog)dialog).getTitle();
+        final String eventLineTitle = ((EventLineCreateDialog)dialog).getTitle();
         final EventLineDescriptor descriptor = new EventLineDescriptor(/* TODO */ 1, eventLineTitle);
         try {
             updateModel(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        model.addEventLine(descriptor);
+                        model.addEventLine(1, eventLineTitle);
                     } catch (Throwable t) {
                         Log.e(TAG, "Error in the update thread", t);
                         notifyOutboxHandlers(DATA_UPDATE_ERROR, 0, 0, null, null);
                     } finally {
-                        ModelData data = model.getData();
+//                        ModelData data = model.getData();
                         Bundle bundle = new Bundle();
                         notifyOutboxHandlers(UPDATE_ENDED, 0, 0, null, bundle);
                         Log.d(TAG, "Model udpate finished");
@@ -184,5 +185,10 @@ public class MainActivity extends ListActivity
     @Override
     public void onEventLineCreateNegative(DialogFragment dialog) {
 
+    }
+
+    @Override
+    public void onListItemClick(ListView listView, View parentView, int position, long id) {
+        listView.
     }
 }

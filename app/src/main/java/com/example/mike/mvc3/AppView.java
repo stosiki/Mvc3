@@ -11,6 +11,7 @@ import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -70,10 +71,8 @@ public class AppView extends LinearLayout {
                     AppView.this.showUpdating();
                     break;
                 case UPDATE_ENDED:
-                    Bundle data = message.getData();
-
-                    String valueOne = data.getString("value_one");
 //                        setData(valueOne);
+                    eventLineListAdapter.notifyDataSetChanged();
                     showUpdateReady();
                     break;
                 case DATA_UPDATE_ERROR:
@@ -89,11 +88,14 @@ public class AppView extends LinearLayout {
         MainActivity mainActivity = (MainActivity)getContext();
         model = mainActivity.getModel();
 
-        List<EventLineDescriptor> eventLineItems = model.getEventLineDescriptors();
-        eventLineListAdapter = new ArrayAdapter<EventLineDescriptor>(getContext(),
-                android.R.layout.simple_list_item_1,
+        List<EventLine> eventLineItems = model.getData();
+        eventLineListAdapter = new EventLineArrayAdapter(getContext(),
+//                android.R.layout.simple_list_item_1,
+                R.layout.line_list_item,
                 eventLineItems);
         ((ListActivity)getContext()).setListAdapter(eventLineListAdapter);
+
+        eventLineList = (ListView)findViewById(R.id.list);
 
         /*
         eventLineList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -109,7 +111,7 @@ public class AppView extends LinearLayout {
         addEventLine.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                eventLineListAdapter.add(new EventLineDescriptor(1, "something elase"));
+//                eventLineListAdapter.add(new EventLine(1, "something elase"));
                 Message.obtain(controllerHandler, ADD_EVENT_LINE).sendToTarget();
             }
         });
@@ -138,4 +140,5 @@ public class AppView extends LinearLayout {
         addEventLine.setText("Updating...");
         addEventLine.setEnabled(false);
     }
+
 }

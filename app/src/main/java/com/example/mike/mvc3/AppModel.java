@@ -21,35 +21,33 @@ public class AppModel {
         listeners = new ArrayList<>();
     }
 
-    public final ModelData getData() {
-        synchronized (this) {
-            return modelData;
-        }
+    public List<EventLine> getData() {
+        return modelData.getData();
     }
 
-    public void addEventLine(EventLineDescriptor descriptor) throws Exception {
+    public void addEventLine(int type, String title) throws Exception {
         synchronized (this) {
-            modelData.addEventLine(descriptor);
+            modelData.addEventLine(type, title);
         }
         notifyListeners();
     }
 
     public void removeEventLine(String eventLineTitle) {
-        modelData.removeEventLine(eventLineTitle);
+        synchronized (this) {
+            modelData.removeEventLine(eventLineTitle);
+        }
+        notifyListeners();
     }
 
-    public ArrayList<SimpleEvent> getEventLine(String eventTitle) {
+    public EventLine getEventLine(String eventTitle) {
         return modelData.getEventLine(eventTitle);
-    }
-
-    public List<EventLineDescriptor> getEventLineDescriptors() {
-        return modelData.getEventLineDescriptors();
     }
 
     public void addEvent(String eventTitle, SimpleEvent event) {
         synchronized (this) {
             modelData.addEvent(eventTitle, event);
         }
+        notifyListeners();
     }
 
     public void addListener(AppModelListener listener) {
